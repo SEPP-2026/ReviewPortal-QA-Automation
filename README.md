@@ -8,13 +8,17 @@ This project is independent from `ReviewPortal-Web` and `ReviewPortal-API`. It r
 
 The framework was created after inspecting the application repositories.
 
-Web routes covered:
+Web routes and flows covered:
 
 - `/` home page
-- `/equipment` equipment catalogue
-- `/equipment/[id]` tool details, rental calculator, and review form
+- `/equipment` equipment catalogue loading, search, sort, available-only filter, and first-card navigation
+- `/equipment/[id]` tool details, rental calculator period controls, booking request modal validation, and review form presence
+- `/services`, `/pricing`, `/contact`, `/calculator`, `/reviews`
+- `/contact` client-side contact form acknowledgement
+- `/login`, `/register`, `/forgot-password`, `/reset-password` page loading and validation checks
+- `/account/reviews` and `/account/change-password` authenticated account pages
+- `/admin`, `/admin/moderation`, `/admin/bookings`, `/admin/tools`, `/admin/categories` read-only admin console coverage
 - `/login?next=/admin` guarded admin login flow
-- `/admin` and `/admin/moderation` staff console landing pages
 
 API routes covered:
 
@@ -25,6 +29,8 @@ API routes covered:
 - `GET /api/tools/{id}`
 - `GET /api/tools/{id}/reviews`
 - `POST /api/tools/{id}/rental-calculation`
+
+The suite deliberately avoids destructive admin actions such as create, edit, delete, approve, reject, password change, and status changes. Review submission is available but disabled by default because it creates pending moderation data.
 
 ## Setup
 
@@ -78,6 +84,12 @@ Run E2E tests:
 npm run test:e2e
 ```
 
+Run all Web UI tests:
+
+```powershell
+npm run test:web
+```
+
 Run API tests:
 
 ```powershell
@@ -101,6 +113,32 @@ Open the HTML report:
 ```powershell
 npm run report
 ```
+
+When a test fails, Playwright writes failure evidence to:
+
+```text
+test-results/
+```
+
+Depending on the failure, this can include:
+
+- `test-failed-1.png` screenshot
+- `video.webm` failure video
+- `error-context.md` accessibility snapshot and failure details
+
+To inspect the full report locally:
+
+```powershell
+npx playwright show-report
+```
+
+In the report:
+
+1. Open the failed test.
+2. Read the error message and call log.
+3. Open the screenshot to see the final page state.
+4. Open the video to replay the browser actions.
+5. If the failure happened on retry in CI, inspect the trace attachment if present.
 
 ## Test Safety
 
@@ -131,12 +169,23 @@ Open a pull request from `development` into `main`. The QA workflow will run on 
 
 Manual runs from the GitHub Actions tab support:
 
-- `test_suite`: `all`, `smoke`, `e2e`, or `api`
+- `test_suite`: `all`, `web`, `smoke`, `e2e`, or `api`
 - `web_base_url`: optional one-run `WEB_BASE_URL` override
 - `api_base_url`: optional one-run `API_BASE_URL` override
 - `run_review_submission`: set to `true` only when the target environment can accept pending review test data
 
 The workflow installs Node.js, runs `npm ci`, installs Playwright browsers with system dependencies, type-checks the project, runs the selected Playwright suite, and uploads both `playwright-report` and `test-results`.
+
+To view GitHub Actions reports:
+
+1. Open the QA automation repository in GitHub.
+2. Go to **Actions**.
+3. Open the workflow run.
+4. Scroll to **Artifacts**.
+5. Download `playwright-report` for the HTML report.
+6. Download `test-results` for screenshots, videos, and failure context.
+
+After downloading `playwright-report`, unzip it and open `index.html` in a browser.
 
 Configure these GitHub repository secrets or variables before running against a real environment:
 

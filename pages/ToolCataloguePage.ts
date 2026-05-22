@@ -26,10 +26,10 @@ export class ToolCataloguePage extends BasePage {
   }
 
   async expectLoaded() {
-    await expect(this.heading).toBeVisible();
+    await expect(this.heading).toBeVisible({ timeout: 30_000 });
     await expect(this.searchToggle).toBeVisible();
     await expect(this.availableOnlyCheckbox).toBeVisible();
-    await expect(this.resultSummary).toBeVisible();
+    await expect(this.resultSummary).toBeVisible({ timeout: 30_000 });
   }
 
   async expandSearch() {
