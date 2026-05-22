@@ -17,6 +17,7 @@ on:
         type: choice
         options:
           - all
+          - web
           - smoke
           - e2e
           - api
@@ -76,6 +77,9 @@ jobs:
           case "${{ inputs.test_suite || 'all' }}" in
             smoke)
               npm run test:smoke
+              ;;
+            web)
+              npm run test:web
               ;;
             e2e)
               npm run test:e2e

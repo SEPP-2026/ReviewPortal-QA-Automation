@@ -5,6 +5,7 @@
   "description": "Playwright TypeScript QA automation framework for the ReviewPortal application.",
   "scripts": {
     "test": "playwright test",
+    "test:web": "playwright test tests/smoke tests/e2e",
     "test:smoke": "playwright test tests/smoke",
     "test:e2e": "playwright test tests/e2e",
     "test:api": "playwright test tests/api",
