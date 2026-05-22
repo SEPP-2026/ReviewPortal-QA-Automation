@@ -1,0 +1,21 @@
+{
+  "name": "reviewportal-qa-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright TypeScript QA automation framework for the ReviewPortal application.",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test tests/smoke",
+    "test:e2e": "playwright test tests/e2e",
+    "test:api": "playwright test tests/api",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "dotenv": "^17.4.2",
+    "typescript": "^6.0.3"
+  }
+}
