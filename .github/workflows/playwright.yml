@@ -1,7 +1,13 @@
 name: Playwright QA Automation
 
 on:
+  push:
+    branches:
+      - development
+      - main
   pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       test_suite:

@@ -113,8 +113,21 @@ npm run report
 
 The workflow lives at `.github/workflows/playwright.yml` and runs on:
 
-- `pull_request`
-- `workflow_dispatch`
+- `push` to `development`
+- `pull_request` targeting `main`
+- `push` to `main`
+- manual `workflow_dispatch`
+
+Recommended branch flow:
+
+```powershell
+git checkout -b development
+git add .
+git commit -m "Update QA automation"
+git push -u origin development
+```
+
+Open a pull request from `development` into `main`. The QA workflow will run on the pull request before merge, and again when the merge lands on `main`.
 
 Manual runs from the GitHub Actions tab support:
 
