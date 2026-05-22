@@ -7,12 +7,11 @@ import { ToolDetailsPage } from "../../pages/ToolDetailsPage";
 
 test.describe("Review submission", () => {
   test.skip(!env.webBaseUrl, skipMessages.webBaseUrl);
+  test.skip(!env.runReviewSubmission, skipMessages.reviewSubmission);
 
   test("submits a customer review to the moderation workflow when explicitly enabled", async ({
     page,
   }) => {
-    test.skip(!env.runReviewSubmission, skipMessages.reviewSubmission);
-
     const cataloguePage = new ToolCataloguePage(page);
     await cataloguePage.goto();
     await cataloguePage.expectLoaded();
