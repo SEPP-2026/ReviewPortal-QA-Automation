@@ -1,5 +1,9 @@
 name: Playwright QA Automation
 
+run-name: >-
+  Playwright QA
+  ${{ github.event.client_payload.source_repository && format('for {0}', github.event.client_payload.source_repository) || '' }}
+
 on:
   push:
     branches:
@@ -34,12 +38,17 @@ on:
         required: false
         default: false
         type: boolean
+  repository_dispatch:
+    types:
+      - reviewportal-web-development
+      - reviewportal-api-development
+      - reviewportal-system-qa
 
 permissions:
   contents: read
 
 concurrency:
-  group: playwright-qa-${{ github.ref }}
+  group: playwright-qa-${{ github.event.client_payload.source_repository || github.repository }}-${{ github.event.client_payload.source_ref || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -47,11 +56,16 @@ jobs:
     name: Run Playwright tests
     runs-on: ubuntu-latest
     env:
-      WEB_BASE_URL: ${{ inputs.web_base_url || vars.WEB_BASE_URL || secrets.WEB_BASE_URL }}
-      API_BASE_URL: ${{ inputs.api_base_url || vars.API_BASE_URL || secrets.API_BASE_URL }}
+      TEST_SUITE: ${{ github.event.client_payload.test_suite || inputs.test_suite || 'all' }}
+      WEB_BASE_URL: ${{ github.event.client_payload.web_base_url || inputs.web_base_url || vars.WEB_BASE_URL || secrets.WEB_BASE_URL }}
+      API_BASE_URL: ${{ github.event.client_payload.api_base_url || inputs.api_base_url || vars.API_BASE_URL || secrets.API_BASE_URL }}
       ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
       ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-      RUN_REVIEW_SUBMISSION: ${{ inputs.run_review_submission || vars.RUN_REVIEW_SUBMISSION || 'false' }}
+      RUN_REVIEW_SUBMISSION: ${{ github.event.client_payload.run_review_submission || inputs.run_review_submission || vars.RUN_REVIEW_SUBMISSION || 'false' }}
+      SOURCE_REPOSITORY: ${{ github.event.client_payload.source_repository }}
+      SOURCE_REF: ${{ github.event.client_payload.source_ref }}
+      SOURCE_SHA: ${{ github.event.client_payload.source_sha }}
+      SOURCE_RUN_URL: ${{ github.event.client_payload.source_run_url }}
 
     steps:
       - name: Checkout
@@ -69,7 +83,35 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Mark source commit as pending
+        if: github.event_name == 'repository_dispatch'
+        env:
+          STATUS_TOKEN: ${{ secrets.QA_AUTOMATION_STATUS_TOKEN }}
+        run: |
+          if [ -z "$STATUS_TOKEN" ] || [ -z "$SOURCE_REPOSITORY" ] || [ -z "$SOURCE_SHA" ]; then
+            echo "Skipping source commit status. QA_AUTOMATION_STATUS_TOKEN, source repository, or source SHA is missing."
+            exit 0
+          fi
+
+          target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          payload="$(jq -nc \
+            --arg state "pending" \
+            --arg context "QA Automation / Playwright" \
+            --arg description "Playwright QA is running" \
+            --arg target_url "$target_url" \
+            '{state:$state, context:$context, description:$description, target_url:$target_url}')"
+
+          curl --fail-with-body -sS \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $STATUS_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$SOURCE_REPOSITORY/statuses/$SOURCE_SHA" \
+            -d "$payload"
+
       - name: Validate target environment
+        id: validate_environment
+        continue-on-error: true
         run: |
           missing=0
 
@@ -91,11 +133,17 @@ jobs:
           echo "API_BASE_URL is configured."
 
       - name: Type check
+        id: type_check
+        if: steps.validate_environment.outcome == 'success'
+        continue-on-error: true
         run: npx tsc --noEmit
 
       - name: Run Playwright tests
+        id: run_tests
+        if: steps.validate_environment.outcome == 'success' && steps.type_check.outcome == 'success'
+        continue-on-error: true
         run: |
-          case "${{ inputs.test_suite || 'all' }}" in
+          case "$TEST_SUITE" in
             smoke)
               npm run test:smoke
               ;;
@@ -112,7 +160,7 @@ jobs:
               npm test
               ;;
             *)
-              echo "Unknown test suite: ${{ inputs.test_suite }}"
+              echo "Unknown test suite: $TEST_SUITE"
               exit 1
               ;;
           esac
@@ -134,3 +182,61 @@ jobs:
           path: test-results/
           retention-days: 14
           if-no-files-found: ignore
+
+      - name: Mark source commit with QA result
+        if: always() && github.event_name == 'repository_dispatch'
+        env:
+          STATUS_TOKEN: ${{ secrets.QA_AUTOMATION_STATUS_TOKEN }}
+        run: |
+          if [ -z "$STATUS_TOKEN" ] || [ -z "$SOURCE_REPOSITORY" ] || [ -z "$SOURCE_SHA" ]; then
+            echo "Skipping source commit status. QA_AUTOMATION_STATUS_TOKEN, source repository, or source SHA is missing."
+            exit 0
+          fi
+
+          state="success"
+          description="Playwright QA passed"
+
+          if [ "${{ steps.validate_environment.outcome }}" != "success" ]; then
+            state="failure"
+            description="Playwright QA configuration failed"
+          elif [ "${{ steps.type_check.outcome }}" != "success" ]; then
+            state="failure"
+            description="Playwright QA type check failed"
+          elif [ "${{ steps.run_tests.outcome }}" != "success" ]; then
+            state="failure"
+            description="Playwright QA tests failed"
+          fi
+
+          target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          payload="$(jq -nc \
+            --arg state "$state" \
+            --arg context "QA Automation / Playwright" \
+            --arg description "$description" \
+            --arg target_url "$target_url" \
+            '{state:$state, context:$context, description:$description, target_url:$target_url}')"
+
+          curl --fail-with-body -sS \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $STATUS_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$SOURCE_REPOSITORY/statuses/$SOURCE_SHA" \
+            -d "$payload"
+
+      - name: Fail workflow when QA checks fail
+        if: always()
+        run: |
+          if [ "${{ steps.validate_environment.outcome }}" != "success" ]; then
+            echo "Target environment validation failed."
+            exit 1
+          fi
+
+          if [ "${{ steps.type_check.outcome }}" != "success" ]; then
+            echo "Type check failed."
+            exit 1
+          fi
+
+          if [ "${{ steps.run_tests.outcome }}" != "success" ]; then
+            echo "Playwright tests failed."
+            exit 1
+          fi

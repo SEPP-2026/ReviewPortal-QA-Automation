@@ -155,6 +155,8 @@ The workflow lives at `.github/workflows/playwright.yml` and runs on:
 - `pull_request` targeting `main`
 - `push` to `main`
 - manual `workflow_dispatch`
+- cross-repository `repository_dispatch` from `ReviewPortal-Web`
+- cross-repository `repository_dispatch` from `ReviewPortal-API`
 
 Recommended branch flow:
 
@@ -221,3 +223,85 @@ ADMIN_PASSWORD=Admin123!
 
 For manual workflow runs, you can also type `web_base_url` and `api_base_url`
 directly into the **Run workflow** form.
+
+## Cross-Repository Automation
+
+`ReviewPortal-Web` and `ReviewPortal-API` can trigger this QA suite without
+copying Playwright tests into those repositories.
+
+Source repositories contain only a small dispatch workflow:
+
+- `ReviewPortal-Web/.github/workflows/trigger-qa-automation.yml`
+- `ReviewPortal-API/.github/workflows/trigger-qa-automation.yml`
+
+Those workflows run on:
+
+- `push` to `development`
+- `push` to `develop`
+- `pull_request` targeting `development`
+- `pull_request` targeting `develop`
+- manual `workflow_dispatch`
+
+They send `repository_dispatch` events to this QA repository:
+
+- `reviewportal-web-development`
+- `reviewportal-api-development`
+
+This QA repository receives the event, runs the configured Playwright suite,
+uploads `playwright-report` and `test-results`, and can optionally write a
+commit status back to the Web/API commit.
+
+### Required Cross-Repo Secret
+
+Create this secret in both source repositories:
+
+```text
+QA_AUTOMATION_TRIGGER_TOKEN
+```
+
+The token must be able to create a repository dispatch event in:
+
+```text
+SEPP-2026/-ReviewPortal-QA-Automation
+```
+
+Recommended fine-grained token permissions:
+
+- Target repository: `SEPP-2026/-ReviewPortal-QA-Automation`
+- Repository permission: `Contents: Read and write`
+- Metadata: read-only, included automatically
+
+For a classic token, use `repo` for private repositories or `public_repo` for
+public repositories.
+
+### Optional Commit Status Callback
+
+If you want the Web/API commit or pull request to show a status named
+`QA Automation / Playwright`, create this secret in the QA automation repository:
+
+```text
+QA_AUTOMATION_STATUS_TOKEN
+```
+
+Recommended fine-grained token permissions:
+
+- Source repositories: `SEPP-2026/ReviewPortal-Web` and `SEPP-2026/ReviewPortal-API`
+- Repository permission: `Commit statuses: Read and write`
+- Metadata: read-only, included automatically
+
+Without this optional token, the QA workflow still runs; it just will not write
+the pass/fail status back to the Web/API commit.
+
+### Important Environment Note
+
+The QA tests run against the URLs configured in this QA repository:
+
+```text
+WEB_BASE_URL
+API_BASE_URL
+```
+
+If those URLs point to production, then a Web/API development branch push will
+trigger tests against production. To test development branch changes before
+production, deploy Web/API development branches to a dev or staging environment
+and set these variables to those dev/staging URLs.
