@@ -198,3 +198,26 @@ Configure these GitHub repository secrets or variables before running against a 
 | `RUN_REVIEW_SUBMISSION` | Variable | Optional default for additive review test |
 
 If URLs or admin credentials are missing, the affected tests skip safely.
+
+### Why did GitHub Actions show 29 skipped tests?
+
+GitHub Actions does not read your local `.env` file. If `WEB_BASE_URL` and
+`API_BASE_URL` are not configured in GitHub, every Web/API test safely skips and
+the HTML report can look empty except for the skipped count.
+
+For automated branch runs, add repository variables:
+
+```text
+WEB_BASE_URL=https://reviewportal-frontend-dccvarataff4a8hg.southeastasia-01.azurewebsites.net
+API_BASE_URL=https://reviewportal-api-escdb3f2epg8eeha.southeastasia-01.azurewebsites.net
+```
+
+Add repository secrets:
+
+```text
+ADMIN_EMAIL=admin.test@reviewportal.local
+ADMIN_PASSWORD=Admin123!
+```
+
+For manual workflow runs, you can also type `web_base_url` and `api_base_url`
+directly into the **Run workflow** form.
