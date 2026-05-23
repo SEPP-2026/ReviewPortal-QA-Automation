@@ -132,15 +132,55 @@ jobs:
           echo "WEB_BASE_URL is configured."
           echo "API_BASE_URL is configured."
 
+      - name: Warm up target apps
+        id: warm_up_targets
+        if: steps.validate_environment.outcome == 'success'
+        continue-on-error: true
+        run: |
+          warm_up() {
+            local name="$1"
+            local url="$2"
+            local expected_pattern="$3"
+
+            echo "Warming up $name at $url"
+            for attempt in $(seq 1 6); do
+              status_code="$(curl -L -sS -o /tmp/warm-up-response.txt -w "%{http_code}" --max-time 30 "$url" || true)"
+
+              if echo "$status_code" | grep -Eq "$expected_pattern"; then
+                echo "$name responded with HTTP $status_code."
+                return 0
+              fi
+
+              echo "$name warm-up attempt $attempt failed with HTTP ${status_code:-000}."
+              sleep 10
+            done
+
+            echo "::error::$name did not become ready at $url."
+            cat /tmp/warm-up-response.txt || true
+            return 1
+          }
+
+          web_root="${WEB_BASE_URL%/}"
+          api_root="${API_BASE_URL%/}"
+
+          if [[ "$api_root" == */api ]]; then
+            api_categories_url="$api_root/categories"
+          else
+            api_categories_url="$api_root/api/categories"
+          fi
+
+          warm_up "Web app" "$web_root" "^(2|3)[0-9][0-9]$"
+          warm_up "API" "$api_categories_url" "^2[0-9][0-9]$"
+
       - name: Type check
         id: type_check
-        if: steps.validate_environment.outcome == 'success'
+        if: steps.validate_environment.outcome == 'success' && steps.warm_up_targets.outcome == 'success'
         continue-on-error: true
         run: npx tsc --noEmit
 
       - name: Run Playwright tests
         id: run_tests
-        if: steps.validate_environment.outcome == 'success' && steps.type_check.outcome == 'success'
+        if: steps.validate_environment.outcome == 'success' && steps.warm_up_targets.outcome == 'success' && steps.type_check.outcome == 'success'
         continue-on-error: true
         run: |
           case "$TEST_SUITE" in
@@ -199,6 +239,9 @@ jobs:
           if [ "${{ steps.validate_environment.outcome }}" != "success" ]; then
             state="failure"
             description="Playwright QA configuration failed"
+          elif [ "${{ steps.warm_up_targets.outcome }}" != "success" ]; then
+            state="failure"
+            description="Playwright QA target warm-up failed"
           elif [ "${{ steps.type_check.outcome }}" != "success" ]; then
             state="failure"
             description="Playwright QA type check failed"
@@ -228,6 +271,11 @@ jobs:
         run: |
           if [ "${{ steps.validate_environment.outcome }}" != "success" ]; then
             echo "Target environment validation failed."
+            exit 1
+          fi
+
+          if [ "${{ steps.warm_up_targets.outcome }}" != "success" ]; then
+            echo "Target application warm-up failed."
             exit 1
           fi
 
