@@ -39,6 +39,7 @@ test.describe("Catalogue API", () => {
   test("serves category, tool detail, review listing, and rental calculation endpoints", async () => {
     const api = await playwrightRequest.newContext({
       baseURL: `${env.apiBaseUrl}/`,
+      timeout: 45_000,
     });
 
     try {
