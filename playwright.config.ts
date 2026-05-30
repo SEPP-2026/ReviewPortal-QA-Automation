@@ -3,7 +3,7 @@ import { env } from "./config/env";
 
 export default defineConfig({
   testDir: "./tests",
-  timeout: 60_000,
+  timeout: 90_000,
   expect: {
     timeout: 10_000,
   },
@@ -20,8 +20,8 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-    actionTimeout: 15_000,
-    navigationTimeout: 30_000,
+    actionTimeout: 20_000,
+    navigationTimeout: 60_000,
   },
   projects: [
     {

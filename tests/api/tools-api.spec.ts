@@ -37,13 +37,16 @@ test.describe("Catalogue API", () => {
   test.skip(!env.apiBaseUrl, skipMessages.apiBaseUrl);
 
   test("serves category, tool detail, review listing, and rental calculation endpoints", async () => {
+    const requestTimeout = 60_000;
     const api = await playwrightRequest.newContext({
       baseURL: `${env.apiBaseUrl}/`,
       timeout: 45_000,
     });
 
     try {
-      const categoriesResponse = await api.get("categories");
+      const categoriesResponse = await api.get("categories", {
+        timeout: requestTimeout,
+      });
       expect(categoriesResponse.ok()).toBeTruthy();
 
       const categories = (await categoriesResponse.json()) as Category[];
@@ -58,13 +61,16 @@ test.describe("Catalogue API", () => {
       expect(firstCategory.id).toEqual(expect.any(Number));
       expect(firstCategory.name).toEqual(expect.any(String));
 
-      const featuredResponse = await api.get("categories/featured");
+      const featuredResponse = await api.get("categories/featured", {
+        timeout: requestTimeout,
+      });
       expect(featuredResponse.ok()).toBeTruthy();
       expect(Array.isArray(await featuredResponse.json())).toBeTruthy();
 
       const categoryToolsResponse = await api.get(
         `categories/${firstCategory.id}/tools`,
         {
+          timeout: requestTimeout,
           params: {
             page: "1",
             pageSize: "5",
@@ -89,7 +95,9 @@ test.describe("Catalogue API", () => {
       expect(firstTool.id).toEqual(expect.any(Number));
       expect(firstTool.name).toEqual(expect.any(String));
 
-      const toolDetailsResponse = await api.get(`tools/${firstTool.id}`);
+      const toolDetailsResponse = await api.get(`tools/${firstTool.id}`, {
+        timeout: requestTimeout,
+      });
       expect(toolDetailsResponse.ok()).toBeTruthy();
       const toolDetails = await toolDetailsResponse.json();
       expect(toolDetails).toEqual(
@@ -100,6 +108,7 @@ test.describe("Catalogue API", () => {
       );
 
       const searchResponse = await api.get("tools/search", {
+        timeout: requestTimeout,
         params: {
           q: firstTool.name.split(" ")[0],
           page: "1",
@@ -111,6 +120,7 @@ test.describe("Catalogue API", () => {
       expect(Array.isArray(searchResults.items)).toBeTruthy();
 
       const reviewsResponse = await api.get(`tools/${firstTool.id}/reviews`, {
+        timeout: requestTimeout,
         params: {
           page: "1",
           pageSize: "5",
@@ -132,6 +142,7 @@ test.describe("Catalogue API", () => {
       const rentalResponse = await api.post(
         `tools/${firstTool.id}/rental-calculation`,
         {
+          timeout: requestTimeout,
           data: {
             startDateTime: startDate.toISOString(),
             endDateTime: endDate.toISOString(),

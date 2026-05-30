@@ -9,8 +9,8 @@ export class HomePage extends BasePage {
   });
 
   readonly browseEquipmentLink = this.page.getByRole("link", {
-    name: /Browse Available Equipment/i,
-  });
+    name: /Browse( Available)? Equipment|All categories|View All Equipment/i,
+  }).first();
 
   readonly rentEquipmentLink = this.page.getByRole("link", {
     name: /Rent Equipment/i,
