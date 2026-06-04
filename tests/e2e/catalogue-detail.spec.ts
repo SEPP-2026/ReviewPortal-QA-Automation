@@ -43,17 +43,17 @@ test.describe("Catalogue and tool detail workflows", () => {
     await detailsPage.expectLoaded();
 
     await page.getByRole("button", { name: /Hourly/i }).click();
-    await expect(page.getByText("Estimated Total:")).toBeVisible();
+    await expect(page.getByText(/Estimated total/i)).toBeVisible();
     await expect(page.getByText(/\$\d+\.\d{2}/).first()).toBeVisible();
 
-    const bookNow = page.getByRole("button", { name: "Book Now" });
+    const bookNow = page.getByRole("button", { name: /Book now/i });
     const canBook = await bookNow.isEnabled();
     test.skip(!canBook, "The selected tool is unavailable for booking.");
 
     await bookNow.click();
 
     await expect(
-      page.getByRole("heading", { name: "Request a booking" })
+      page.getByRole("heading", { name: /Request a booking/i })
     ).toBeVisible();
 
     const bookingDialog = page.getByRole("dialog");
@@ -70,7 +70,7 @@ test.describe("Catalogue and tool detail workflows", () => {
 
     await bookingDialog.getByRole("button", { name: "Cancel" }).click();
     await expect(
-      page.getByRole("heading", { name: "Request a booking" })
+      page.getByRole("heading", { name: /Request a booking/i })
     ).toBeHidden();
   });
 });
