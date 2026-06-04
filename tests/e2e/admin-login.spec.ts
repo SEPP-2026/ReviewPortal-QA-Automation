@@ -20,6 +20,6 @@ test.describe("Admin authentication", () => {
 
     await expect(page).toHaveURL(/\/admin(\/moderation)?/);
     await expect(page.getByText("Staff console")).toBeVisible();
-    await expect(page.getByText("Signed in as")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
   });
 });

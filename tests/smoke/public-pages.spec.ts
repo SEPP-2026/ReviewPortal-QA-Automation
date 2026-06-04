@@ -29,13 +29,13 @@ const publicPages = [
   },
   {
     path: "/login",
-    heading: "Sign in",
-    expectedText: "Use your ReviewPortal credentials.",
+    heading: "Welcome back",
+    expectedText: "Sign in to manage your rentals, bookings, and reviews.",
   },
   {
     path: "/register",
     heading: "Create your account",
-    expectedText: "Passwords need 8+ characters",
+    expectedText: "At least 8 characters with an uppercase letter and a digit.",
   },
   {
     path: "/forgot-password",

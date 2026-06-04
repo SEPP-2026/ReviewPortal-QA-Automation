@@ -9,19 +9,19 @@ export class ToolDetailsPage extends BasePage {
   });
 
   readonly rentalCalculatorHeading = this.page.getByRole("heading", {
-    name: "Rental Calculator",
+    name: /Rental calculator/i,
   });
 
   readonly customerReviewsHeading = this.page.getByRole("heading", {
-    name: "Customer Reviews",
+    name: /Customer reviews/i,
   });
 
   readonly writeReviewHeading = this.page.getByRole("heading", {
-    name: "Write a Review",
+    name: /Write a review/i,
   });
 
   readonly submitReviewButton = this.page.getByRole("button", {
-    name: "Submit Review",
+    name: /Submit review/i,
   });
 
   constructor(page: Page) {

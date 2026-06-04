@@ -4,7 +4,9 @@ import { BasePage } from "./BasePage";
 export class AdminLoginPage extends BasePage {
   protected readonly path = "/login";
 
-  readonly heading = this.page.getByRole("heading", { name: "Sign in" });
+  readonly heading = this.page.getByRole("heading", {
+    name: /Welcome back|Sign in/i,
+  });
   readonly emailInput = this.page.getByLabel("Email");
   readonly passwordInput = this.page.getByLabel("Password");
   readonly signInButton = this.page.getByRole("button", { name: "Sign in" });
