@@ -40,6 +40,7 @@ test.describe("Catalogue API", () => {
     const requestTimeout = 60_000;
     const api = await playwrightRequest.newContext({
       baseURL: `${env.apiBaseUrl}/`,
+      timeout: 45_000,
     });
 
     try {

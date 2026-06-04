@@ -7,10 +7,10 @@ export default defineConfig({
   expect: {
     timeout: 10_000,
   },
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: env.ci,
   retries: env.ci ? 2 : 0,
-  workers: env.ci ? 1 : undefined,
+  workers: 1,
   reporter: [
     ["list"],
     ["html", { open: "never", outputFolder: "playwright-report" }],
