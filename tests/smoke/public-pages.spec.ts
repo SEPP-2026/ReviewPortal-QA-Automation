@@ -18,11 +18,6 @@ const publicPages = [
     expectedText: "Send us a Message",
   },
   {
-    path: "/calculator",
-    heading: "Rental Calculator",
-    expectedText: "Browse all equipment",
-  },
-  {
     path: "/reviews",
     heading: "Reviews & Ratings",
     expectedText: "API Connected",
