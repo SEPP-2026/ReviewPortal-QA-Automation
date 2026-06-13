@@ -15,8 +15,8 @@ test.describe("Catalogue and tool detail workflows", () => {
     await cataloguePage.availableOnlyCheckbox.check();
     await expect(cataloguePage.availableOnlyCheckbox).toBeChecked();
 
-    await page.selectOption("select", "name");
-    await expect(page.locator("select")).toHaveValue("name");
+    await cataloguePage.sortSelect.selectOption("name");
+    await expect(cataloguePage.sortSelect).toHaveValue("name");
 
     await cataloguePage.searchFor("drill");
     await expect(cataloguePage.searchInput).toHaveValue("drill");
