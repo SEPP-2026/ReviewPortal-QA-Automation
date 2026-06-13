@@ -17,12 +17,12 @@ test.describe("Contact workflow", () => {
       .getByPlaceholder("Tell us about your project or question...")
       .fill("This is a safe automated contact form smoke check.");
 
-    const dialogPromise = page.waitForEvent("dialog").then(async (dialog) => {
-      expect(dialog.message()).toContain("Thank you for your message");
-      await dialog.accept();
-    });
+    await page.getByRole("button", { name: /send message/i }).click();
 
-    await page.getByRole("button", { name: "Send Message" }).click();
-    await dialogPromise;
+    await expect(
+      page
+        .getByText("Thank you for your message! We'll get back to you soon.")
+        .last()
+    ).toBeVisible();
   });
 });
