@@ -14,6 +14,9 @@ export class ToolCataloguePage extends BasePage {
 
   readonly searchInput = this.page.getByPlaceholder("Search equipment...");
   readonly availableOnlyCheckbox = this.page.getByLabel("Available only");
+  readonly sortSelect = this.page.locator("select").filter({
+    has: this.page.locator('option[value="name"]'),
+  });
   readonly resultSummary = this.page.getByText(/Showing\s+\d+\s+results/i);
   readonly firstToolCard = this.page
     .getByRole("link")
